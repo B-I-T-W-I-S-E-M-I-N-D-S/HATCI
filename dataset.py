@@ -287,10 +287,7 @@ class VideoDataSet(data.Dataset):
         
         # Ensure all 22 EGTEA action classes are included
         expected_labels = [
-            'Clean/Wipe', 'Close', 'Compress', 'Crack', 'Cut', 'Divide/Pull Apart',
-            'Dry', 'Inspect/Read', 'Mix', 'Move Around', 'Open', 'Operate', 'Other',
-            'Pour', 'Put', 'Squeeze', 'Take', 'Transfer', 'Turn off', 'Turn on', 'Wash',
-            'Spread'  # Assumed missing label; replace with actual label if known
+            'cover', 'defense','flick','hook','late_cut','lofted','pull','square_cut','straight','sweep'
         ]
         for label in expected_labels:
             if label not in self.label_name:
