@@ -5,7 +5,7 @@ import torch
 import torchvision
 import torch.nn.functional as F
 import numpy as np
-import opts_egtea as opts
+import opts_cricket as opts
 import time
 import h5py
 from tqdm import tqdm
@@ -603,7 +603,7 @@ class ActionDetectionModel:
             input_data = input_data.to(device)
             cls_label = cls_label.to(device)
             reg_label = reg_label.to(device)
-            act_cls, act_reg, _ = self.model(input_data.float())
+            act_cls, act_reg = self.model(input_data.float())
             cost_reg = 0
             cost_cls = 0
 
