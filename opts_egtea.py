@@ -12,14 +12,14 @@ def parse_opt():
     parser.add_argument('--seed', default=7, type=int, help='random seed for reproducibility')
 
     # Overall Dataset settings
-    parser.add_argument('--num_of_class', type=int, default=23)
+    parser.add_argument('--num_of_class', type=int, default=11)
     parser.add_argument('--data_format', type=str, default="npz_i3d")
     parser.add_argument('--data_rescale', default=False, action='store_true')
     parser.add_argument('--predefined_fps', default=None, type=float)
     parser.add_argument('--rgb_only', default=False, action='store_true')
-    parser.add_argument('--video_anno', type=str, default="./data/egtea_annotations_split{}.json")
-    parser.add_argument('--video_feature_all_train', type=str, default="./data/I3D/")
-    parser.add_argument('--video_feature_all_test', type=str, default="./data/I3D/")
+    parser.add_argument('--video_anno', type=str, default="./data/cricket_annotations_split1.json")
+    parser.add_argument('--video_feature_all_train', type=str, default="./data/cricket_features/")
+    parser.add_argument('--video_feature_all_test', type=str, default="./data/cricket_features/")
     parser.add_argument('--setup', type=str, default="")
     parser.add_argument('--exp', type=str, default="01")
     parser.add_argument('--split', type=str, default="1")
@@ -27,7 +27,7 @@ def parse_opt():
     # Network
     parser.add_argument('--feat_dim', type=int, default=2048)
     parser.add_argument('--hidden_dim', type=int, default=1024)
-    parser.add_argument('--out_dim', type=int, default=23)
+    parser.add_argument('--out_dim', type=int, default=11)
     parser.add_argument('--enc_layer', type=int, default=3)
     parser.add_argument('--enc_head', type=int, default=8)
     parser.add_argument('--dec_layer', type=int, default=5)
