@@ -1,4 +1,3 @@
-
 import os
 import json
 import torch
@@ -60,7 +59,7 @@ VIS_CONFIG = {
     'video_pred_bar_y': 0.5,
     'video_bar_height': 0.15,
     'video_bar_text_scale': 0.7,
-    'min_segment_duration': 1.0,
+    'min_segment_duration': 0.1,
     'video_frame_text_y': 0.05,
     'video_bar_label_x': 10,
     'video_bar_label_scale': 0.5,
@@ -158,7 +157,7 @@ VIDEO_PLAYER_HTML = """
             <source src="{stream_url}" type="video/mp4">
             Your browser does not support the video tag.
         </video>
-        <div classzas="controls">
+        <div class="controls">
             <button onclick="seek(-10)">Rewind 10s</button>
             <button onclick="seek(10)">Forward 10s</button>
         </div>
@@ -603,7 +602,7 @@ class ActionDetectionModel:
             input_data = input_data.to(device)
             cls_label = cls_label.to(device)
             reg_label = reg_label.to(device)
-            act_cls, act_reg = self.model(input_data.float())
+            act_cls, act_reg, _ = self.model(input_data.float())
             cost_reg = 0
             cost_cls = 0
 
@@ -813,7 +812,7 @@ class ActionDetectionModel:
                 'duration': anno['segment'][1] - anno['segment'][0]
             } for anno in gt_annotations
         ]
-        pred_segments = [
+        pred_segments_all = [
             {
                 'label': pred['label'],
                 'start': pred['segment'][0],
@@ -823,8 +822,46 @@ class ActionDetectionModel:
             } for pred in result_dict[video_name]
         ]
 
-        matches = []
+        # Filter pred_segments to match each gt_segment
+        pred_segments = []
+        used_pred_indices = set()
         iou_threshold = VIS_CONFIG['iou_threshold']
+        
+        for gt in gt_segments:
+            best_iou = -1
+            best_pred = None
+            best_pred_idx = None
+            
+            # First, try to find a matching prediction with the same label
+            for idx, pred in enumerate(pred_segments_all):
+                if idx in used_pred_indices:
+                    continue
+                if pred['label'] == gt['label']:
+                    iou = calc_iou([pred['end'], pred['duration']], [gt['end'], gt['duration']])
+                    if iou >= iou_threshold and iou > best_iou:
+                        best_iou = iou
+                        best_pred = pred
+                        best_pred_idx = idx
+            
+            # If no matching prediction with the same label is found, find the best covered prediction
+            if best_pred is None:
+                for idx, pred in enumerate(pred_segments_all):
+                    if idx in used_pred_indices:
+                        continue
+                    # Check if the predicted segment is fully covered by the ground truth segment
+                    if pred['start'] >= gt['start'] and pred['end'] <= gt['end']:
+                        iou = calc_iou([pred['end'], pred['duration']], [gt['end'], gt['duration']])
+                        if iou > best_iou:
+                            best_iou = iou
+                            best_pred = pred
+                            best_pred_idx = idx
+            
+            if best_pred is not None:
+                pred_segments.append(best_pred)
+                used_pred_indices.add(best_pred_idx)
+
+        # Calculate matches for summary
+        matches = []
         used_gt_indices = set()
         for pred in pred_segments:
             best_iou = 0
@@ -833,7 +870,7 @@ class ActionDetectionModel:
                 if gt_idx in used_gt_indices:
                     continue
                 iou = calc_iou([pred['end'], pred['duration']], [gt['end'], gt['duration']])
-                if iou > best_iou and iou >= iou_threshold:
+                if iou > best_iou and iou >= iou_threshold and pred['label'] == gt['label']:
                     best_iou = iou
                     best_gt_idx = gt_idx
             if best_gt_idx is not None:
@@ -879,6 +916,13 @@ class ActionDetectionModel:
                 "video_stream_url": None,
                 "status": "pending"
             }
+        print("Ground Truth Segments (gt_segments):")
+        for seg in gt_segments:
+            print(seg)
+
+        print("\nPredicted Segments (pred_segments):")
+        for seg in pred_segments:
+            print(seg)
 
         return VideoPrediction(
             video_name=video_name,
